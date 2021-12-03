@@ -1,23 +1,23 @@
-txt = """00100
-11110
-10110
-10111
-10101
-01111
-00111
-11100
-10000
-11001
-00010
-01010"""
+# txt = """00100
+# 11110
+# 10110
+# 10111
+# 10101
+# 01111
+# 00111
+# 11100
+# 10000
+# 11001
+# 00010
+# 01010"""
 
-inp = [line.strip() for line in txt.split('\n')]
+# inp = [line.strip() for line in txt.split('\n')]
 inp = [line.strip() for line in open('input.txt', 'r')]
 
 
-def getCnts1(inp):
-    cnts1 = [0 for i in range(0, len(inp[0]))]
-    for l in inp:
+def getCnts1(lst):
+    cnts1 = [0 for i in range(0, len(lst[0]))]
+    for l in lst:
         for i in range(0, len(l)):
             if l[i] == '1':
                 cnts1[i] += 1
@@ -28,16 +28,16 @@ def getSln1(lst):
     cnts1 = getCnts1(lst)
 
     le = len(lst)
-    v1 = 0
-    v2 = 0
+    v1 = ""
+    v2 = ""
     for i in range(0, len(cnts1)):
-        v1 = v1*2
-        v2 = v2*2
         if cnts1[i] > le-cnts1[i]:
-            v1 += 1
+            v1 += "1"
+            v2 += "0"
         else:
-            v2 += 1
-    return v1, v2
+            v1 += "0"
+            v2 += "1"
+    return int(v1, 2), int(v2, 2)
 
 
 v1, v2 = getSln1(inp)
@@ -51,12 +51,10 @@ def filterCommon(lst, most, least):
     while len(remainings) > 1:
         le = len(remainings)
         cnts1 = getCnts1(list(remainings))
-
         compare = least
         if cnts1[idx] >= le-cnts1[idx]:
             compare = most
-        filtered = [x for x in remainings if x[idx] == compare]
-        remainings = filtered
+        remainings = [x for x in remainings if x[idx] == compare]
         idx += 1
     return remainings.pop()
 
