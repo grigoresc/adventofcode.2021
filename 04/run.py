@@ -24,25 +24,17 @@ def Read():
 
 def Part1(bingo, tickets):
     round = 0
-    found = False
-    while not found:
+    while True:
         round += 1
         numbers = set(bingo[0:round])
         lastnumber = bingo[round-1]
-        found = False
-        for idxt in range(0, len(tickets)):
-            for i in range(0, 5):
-                row = set(tickets[idxt][i])
-                if row.issubset(numbers):
-                    found = True
-                    winningticket = idxt
-                    break
-                col = set(list(zip(*tickets[idxt]))[i])
-                if col.issubset(numbers):
-                    found = True
-                    winningticket = idxt
-                    break
-    return round, lastnumber, winningticket
+        for idxt, ticket in enumerate(tickets):
+            for row in ticket:
+                if set(row).issubset(numbers):
+                    return round, lastnumber, idxt
+            for col in zip(*ticket):
+                if set(col).issubset(numbers):
+                    return round, lastnumber, idxt
 
 
 def Part2(bingo, tickets):
@@ -53,29 +45,29 @@ def Part2(bingo, tickets):
         numbers = set(bingo[0:round])
         lastnumber = bingo[round-1]
         found = False
-        tdodel = []
-        for idxt in range(0, len(tickets)):
-            for i in range(0, 5):
-                row = set(tickets[idxt][i])
-                if row.issubset(numbers):
+        toDel = set()
+        for idxt, ticket in enumerate(tickets):
+            for row in ticket:
+                if set(row).issubset(numbers):
                     found = True
                     winningticket = idxt
-                    tdodel.append(idxt)
+                    toDel.add(idxt)
                     break
-                col = set(list(zip(*tickets[idxt]))[i])
-                if col.issubset(numbers):
+            for col in zip(*ticket):
+                if set(col).issubset(numbers):
                     found = True
                     winningticket = idxt
-                    tdodel.append(idxt)
+                    toDel.add(idxt)
                     break
 
         if found and len(tickets) == 1:
             break
 
         if found:
-            tdodel = reversed(tdodel)
-            for idxt in tdodel:
+            toDel = sorted(list(toDel), reverse=True)
+            for idxt in toDel:
                 del tickets[idxt]
+
     return round, lastnumber, winningticket
 
 
