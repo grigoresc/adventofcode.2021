@@ -26,30 +26,20 @@ def Add(x, y):
 def Part1(vents):
     for x1, y1, x2, y2 in vents:
         if x1 == x2:
-            x = x1
-            incy = 1
-            if y1 > y2:
-                incy = -1
+            incy = 1 if y1 < y2 else -1
             for y in range(y1, y2+incy, incy):
-                Add(x, y)
+                Add(x1, y)
         if y1 == y2:
-            y = y1
-            incx = 1
-            if x1 > x2:
-                incx = -1
+            incx = 1 if x1 < x2 else -1
             for x in range(x1, x2+incx, incx):
-                Add(x, y)
+                Add(x, y1)
 
 
 def Part2(vents):
     for x1, y1, x2, y2 in vents:
         if abs(x2-x1) == abs(y2-y1):
-            incx = 1
-            if x1 > x2:
-                incx = -1
-            incy = 1
-            if y1 > y2:
-                incy = -1
+            incx = 1 if x1 < x2 else -1
+            incy = 1 if y1 < y2 else -1
             y = y1
             for x in range(x1, x2+incx, incx):
                 Add(x, y)
