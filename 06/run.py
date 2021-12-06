@@ -2,19 +2,20 @@ import re
 from collections import defaultdict
 
 inp = [line.strip() for line in open('input.txt', 'r')]
-lanternfish = list(map(int, re.findall(r'\d+', inp[0])))
+fish = list(map(int, re.findall(r'\d+', inp[0])))
 
 
 def Solve(rounds):
     d = defaultdict(int)
-    for f in lanternfish:
+    for f in fish:
         d[f] += 1
     for r in range(0, rounds):
-        pd = d.copy()
+        zeros = d[0]
         for i in range(1, 8 + 1):
-            d[i - 1] = pd[i]
-        d[6] += pd[0]
-        d[8] = pd[0]
+            d[i - 1] = d[i]
+        d[6] += zeros
+        d[8] = zeros
+
     l = sum(d.values())
     print(l)
 
