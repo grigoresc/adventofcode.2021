@@ -7,32 +7,36 @@ inp = [line.strip() for line in open('input.txt', 'r')]
 
 def parse(line):
     vals = list(map(int, re.findall(r'\d+', line)))
-    print(vals)
     return vals
 
 
 lst = parse(inp[0])
-
 f = set(lst)
-ms = 100000000000000
-
-h = defaultdict(int)
+dist = defaultdict(int)
 
 
-def fib(s):
-    if h[s] > 0:
-        return h[s]
+def cost(d):
+    if dist[d] > 0:
+        return dist[d]
     a = 0
-    for i in range(1, s + 1):
+    for i in range(1, d + 1):
         a += i
-    h[s] = a
+    dist[d] = a
     return a
 
 
-for p in range(1, max(f) + 100):
-    v = map(lambda x: abs(fib(abs(p - x))), lst)
-    s = sum(list(v))
-    # print(s, p)
+ms = 100000000000000
+for p in range(min(f), max(f)):
+    s = sum(map(lambda x: abs(p - x), lst))
     if s < ms:
         ms = s
 print(ms)
+# 340052
+
+ms = 100000000000000
+for p in range(min(f), max(f)):
+    s = sum(map(lambda x: cost(abs(p - x)), lst))
+    if s < ms:
+        ms = s
+print(ms)
+# 92948968
