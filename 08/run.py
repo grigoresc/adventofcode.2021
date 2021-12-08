@@ -1,17 +1,8 @@
-import re
-import itertools
-from collections import defaultdict
 from collections import Counter
 
-inp = [line.strip() for line in open('sample.txt', 'r')]
-
 # inp = ["acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf"]
-
-
+# inp = [line.strip() for line in open('sample.txt', 'r')]
 inp = [line.strip() for line in open('input.txt', 'r')]
-
-
-# lst = list(map(int, inp[0].split(',')))
 
 
 def parse(line):
@@ -32,71 +23,49 @@ for l in lst:
 print(cnt1)  # 288
 
 
-def sp(s):
-    lst = []
-    for x in s:
-        lst.append(x)
-    return lst
+def explode(s):
+    return list(s)
 
 
 def str_to_set(s):
-    return set(sp(s))
+    return set(explode(s))
 
 
-def decryptl(l):
-    global w_b, w_e, w_cf, w_c, w_d, dec
-    w1 = set(sp(list(filter(lambda x: len(x) == 2, l[0]))[0]))
-    w4 = set(sp(list(filter(lambda x: len(x) == 4, l[0]))[0]))
-    w7 = set(sp(list(filter(lambda x: len(x) == 3, l[0]))[0]))
-    w8 = set(sp(list(filter(lambda x: len(x) == 7, l[0]))[0]))
-    # decode 2 3 5 (least common segms)
-    w5_1 = set(sp(list(filter(lambda x: len(x) == 5, l[0]))[0]))
-    w5_2 = set(sp(list(filter(lambda x: len(x) == 5, l[0]))[1]))
-    w5_3 = set(sp(list(filter(lambda x: len(x) == 5, l[0]))[2]))
-    cnt = Counter(list(w5_1) + list(w5_2) + list(w5_3))
-    w_be = set(list(map(lambda x: x[0], filter(lambda x: x[1] == 1, cnt.items()))))
-    # decode 6 9 0  (least common segms)
-    w6_1 = set(sp(list(filter(lambda x: len(x) == 6, l[0]))[0]))
-    w6_2 = set(sp(list(filter(lambda x: len(x) == 6, l[0]))[1]))
-    w6_3 = set(sp(list(filter(lambda x: len(x) == 6, l[0]))[2]))
-    cnt = Counter(list(w6_1) + list(w6_2) + list(w6_3))
-    w_cde = set(list(map(lambda x: x[0], filter(lambda x: x[1] == 2, cnt.items()))))
-    w5_all = w5_1 | w5_2 | w5_3
-    w5_1 - w5_all
-    w_a = w7 - w1
-    # w9 = w4 + wd
+def decrypt_line(l):
+    numbers = l[0]
+    # wires for 1 or 4
+    w1 = set(explode(list(filter(lambda x: len(x) == 2, numbers))[0]))
+    w4 = set(explode(list(filter(lambda x: len(x) == 4, numbers))[0]))
+
+    # decode b,e and e based on 2 3 5
+    w235 = list()  # wires for 2,3,5
+    w235 += explode(list(filter(lambda x: len(x) == 5, numbers))[0])
+    w235 += explode(list(filter(lambda x: len(x) == 5, numbers))[1])
+    w235 += explode(list(filter(lambda x: len(x) == 5, numbers))[2])
+    cnt = Counter(w235)
+    w_be = set(list(map(lambda x: x[0], filter(lambda x: x[1] == 1, cnt.items()))))  # wires for b,e
+
+    # decode c,d,e based on 6 9 0
+    w690 = list()  # wires for 6,9,0
+    w690 += explode(list(filter(lambda x: len(x) == 6, numbers))[0])
+    w690 += explode(list(filter(lambda x: len(x) == 6, numbers))[1])
+    w690 += explode(list(filter(lambda x: len(x) == 6, numbers))[2])
+    cnt = Counter(w690)
+    w_cde = set(list(map(lambda x: x[0], filter(lambda x: x[1] == 2, cnt.items()))))  # wires for c,d,e
+
     w_bd = w4 - w1
-    w_aeg = w8 - w4
-    w_eg = w_aeg - w_a
-    w_abdeg = w8 - w1  # ?
-    w_bdeg = w8 - w7
     w_b = w_be & w_bd
     w_e = w_be - w_b
     w_d = w_bd - w_b
-    w_g = w8 - w1 - w_a - w_b - w_d - w_e
     w_cf = w1
     w_c = w_cde & w_cf
-    w_f = w_cf - w_c
-    dec = dict()
-    dec[list(w_a)[0]] = 'a'
-    dec[list(w_b)[0]] = 'b'
-    dec[list(w_c)[0]] = 'c'
-    dec[list(w_d)[0]] = 'd'
-    dec[list(w_e)[0]] = 'e'
-    dec[list(w_f)[0]] = 'f'
-    dec[list(w_g)[0]] = 'g'
-    ret = 0
+    ret = ""
     for x in l[1]:
-        decs = decode(x)
-        ret += decs
-        # print(x, decs)
-        ret = ret * 10
-    ret = int(ret / 10)
-    return ret
+        ret += str(decode(x, w_b, w_e, w_cf, w_c, w_d))
+    return int(ret, 10)
 
 
-def decode(s):
-    global w_b, w_e, w_cf, w_c, w_d, dec
+def decode(s, w_b, w_e, w_cf, w_c, w_d):
     if len(s) == 2:
         return 1
     if len(s) == 4:
@@ -114,8 +83,6 @@ def decode(s):
         return 2
     if len(s) == 6:
         w = str_to_set(s)
-        # print(w_e)
-        # print(w)
         if len(w_e - w) == 0 and len(w_d - w) == 0:
             return 6
         if len(w_c - w) == 0 and len(w_d - w) == 0:
@@ -123,10 +90,5 @@ def decode(s):
         return 0
 
 
-global w_b, w_e, w_cf, w_c, w_d, dec
-su = 0
-for l in lst:
-    d = decryptl(l)
-    su += d
-    # print(d)
-print(sum(map(decryptl, lst)))  # 940724
+sln2 = sum(map(decrypt_line, lst))
+print(sln2)  # 940724
