@@ -37,7 +37,7 @@ def decrypt_line(l):
     w1 = set(explode(list(filter(lambda x: len(x) == 2, numbers))[0]))
     w4 = set(explode(list(filter(lambda x: len(x) == 4, numbers))[0]))
 
-    # decode b,e and e based on 2 3 5
+    # decode b,e based on 2 3 5
     w235 = list()  # wires for 2,3,5
     w235 += explode(list(filter(lambda x: len(x) == 5, numbers))[0])
     w235 += explode(list(filter(lambda x: len(x) == 5, numbers))[1])
