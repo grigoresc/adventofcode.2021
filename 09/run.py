@@ -3,35 +3,31 @@ inp = [line.strip() for line in open('input.txt', 'r')]
 
 
 def pos(x, y):
-    yield x + 1, y
-    yield x - 1, y
-    yield x, y - 1
-    yield x, y + 1
+    for nx, ny in [(x + 1, y), (x - 1, y), (x, y - 1), (x, y + 1)]:
+        if 0 <= nx < len(inp) and 0 <= ny < len(inp[0]):
+            yield nx, ny
 
 
 def isLow(x, y):
     for (nx, ny) in pos(x, y):
-        if 0 <= nx < len(inp) and 0 <= ny < len(inp[0]):
-            if inp[x][y] >= inp[nx][ny]:
-                return False
+        if inp[x][y] >= inp[nx][ny]:
+            return False
     return True
 
 
 def findBasin(x, y):
-    b = set()
-    a = set()
-    a.add((x, y))
-    while len(a) > 0:
-        wa = a.copy()
-        for (x, y) in wa:
-            a.remove((x, y))
-            b.add((x, y))
+    basin = set()
+    toprocess = []
+    toprocess.append((x, y))
+    while len(toprocess) > 0:
+        for (x, y) in toprocess:
+            toprocess.remove((x, y))
+            basin.add((x, y))
             for (nx, ny) in pos(x, y):
-                if 0 <= nx < len(inp) and 0 <= ny < len(inp[0]):
-                    if inp[nx][ny] < '9' and not (nx, ny) in b:
-                        a.add((nx, ny))
+                if inp[nx][ny] < '9' and not (nx, ny) in basin:
+                    toprocess.append((nx, ny))
 
-    return b
+    return basin
 
 
 # part 1
