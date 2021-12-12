@@ -7,12 +7,6 @@ def parse(line):
     return s, e
 
 
-lst = list(map(parse, inp))
-
-paths = set(lst)
-cnt = 0
-
-
 def search(start, rpaths: set, smalls: list, dup: int, a: list):
     global cnt
     if start.lower() == start:
@@ -20,7 +14,7 @@ def search(start, rpaths: set, smalls: list, dup: int, a: list):
     if start == 'end':
         cnt += 1
         return
-    starts = set([x for x in rpaths if x[0] == start or x[1] == start])
+    starts = [x for x in rpaths if x[0] == start or x[1] == start]
     for si in starts:
         next = si[1] if si[0] == start else si[0]
         nextdup = dup
@@ -36,6 +30,13 @@ def search(start, rpaths: set, smalls: list, dup: int, a: list):
         search(next, npaths, smalls.copy(), nextdup, na)
 
 
+lst = list(map(parse, inp))
+paths = set(lst)
+
+cnt = 0
+search('start', paths, [], 1, ['start'])
+print(cnt)  # 3298
+
+cnt = 0
 search('start', paths, [], 0, ['start'])
-# 3298
 print(cnt)  # 93572
