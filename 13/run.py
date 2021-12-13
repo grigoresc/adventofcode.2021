@@ -3,28 +3,29 @@ from functools import reduce
 # inp = [line.strip() for line in open('sample.txt', 'r')]
 inp = [line.strip() for line in open('input.txt', 'r')]
 
-p = set()
-f = []
-for l in inp:
-    if len(l) == 0:
-        continue
-    if l[0] == 'f':
+
+def parse(inp):
+    p = set()  # points
+    for idx, l in enumerate(inp):
+        if len(l) == 0:
+            break
+        (x, y) = l.split(',')
+        p.add((int(x), int(y)))
+    f = []  # folds
+    for l in inp[idx + 1:]:
         (t, fs) = l.split('=')
-        y = 0
-        x = 0
+        (x, y) = (0, 0)
         if 'y' in t:
             y = fs
         else:
             x = fs
         f.append((int(x), int(y)))
-    else:
-        (x, y) = l.split(',')
-        p.add((int(x), int(y)))
+    return p, f
 
 
-def printm(lst, f):
+def printmatrix(lst):
     for line in lst:
-        s = reduce(lambda x, y: x + f(y), line, "")
+        s = reduce(lambda x, y: x + y, line, "")
         print(s)
 
 
@@ -34,13 +35,15 @@ def printp(p):
     s = [[' '] * (maxx + 1) for i in range(maxy + 1)]
     for x, y in p:
         s[y][x] = '#'
-    printm(s, lambda x: x)
+    printmatrix(s)
 
+
+p, f = parse(inp)
 
 np1 = None
 for fx, fy in f:
     np = set()
-    for (x, y) in p:
+    for x, y in p:
         if x <= fx or fx == 0:
             nx = x
         else:
