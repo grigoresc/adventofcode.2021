@@ -1,15 +1,7 @@
 from functools import reduce
-from itertools import repeat
 
-inp = [line.strip() for line in open('sample.txt', 'r')]
-
+# inp = [line.strip() for line in open('sample.txt', 'r')]
 inp = [line.strip() for line in open('input.txt', 'r')]
-
-
-def parse(line):
-    (s, e) = line.split('-')
-    return s, e
-
 
 p = set()
 f = []
@@ -39,19 +31,14 @@ def printm(lst, f):
 def printp(p):
     maxx = max(list(p), key=lambda x: x[0])[0]
     maxy = max(list(p), key=lambda x: x[1])[1]
-
-    s = list(repeat(list(repeat(' ', maxx + 1)), maxy + 1))
-    s = []
-    for i in range(maxy + 1):
-        s.append(list(repeat(' ', maxx + 1)))
+    s = [[' '] * (maxx + 1) for i in range(maxy + 1)]
     for x, y in p:
         s[y][x] = '#'
     printm(s, lambda x: x)
 
 
+np1 = None
 for fx, fy in f:
-    maxx = max(list(p), key=lambda x: x[0])[0]
-    maxy = max(list(p), key=lambda x: x[1])[1]
     np = set()
     for (x, y) in p:
         if x <= fx or fx == 0:
@@ -64,8 +51,8 @@ for fx, fy in f:
             ny = fy - (y - fy)
         np.add((nx, ny))
     p = np
-    # break
+    if np1 is None:
+        np1 = len(np)
 
-# 712
-printp(p)
-# BLHFJPJF
+print(np1)  # 712
+printp(p)  # BLHFJPJF
