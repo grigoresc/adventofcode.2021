@@ -1,6 +1,6 @@
+import math
 from collections import Counter, defaultdict
 
-# inp = [line.strip() for line in open('sample.txt', 'r')]
 inp = [line.strip() for line in open('input.txt', 'r')][0]
 
 # sample = 'D2FE28'
@@ -9,56 +9,46 @@ inp = [line.strip() for line in open('input.txt', 'r')][0]
 # sample = '8A004A801A8002F478'
 # sample = '620080001611562C8802118E34'
 # sample = 'C0015000016115A2E0802F182340'  # 23
-# inp = sample
-#
+# sample2 = 'C200B40A82'
+# sample2 = '9C0141080250320F1802104A08'
+# inp = sample2
+
 b = ''
 for h in inp:
     b += '{:04b}'.format(int(h, 16))
-
-# b = '00' + bin(int(inp, 16))[2:]
-
 lst = []
 
 
 def parsepackage(idx, packagecnt=None, packagelen=None):
-    global b
-    global lst
+    global b, lst
 
     firstidx = idx
     cnt = 0
 
-    print("parsepackage", idx, packagecnt, packagelen)
+    vals = []
+
     while True:
-        # while idx < len(b):
         v = b[idx:idx + 3]
         t = b[idx + 3:idx + 6]
         idx += 6
         vv = int(v, 2)
-        tv = int(t, 2)
-        print("vv", vv)
-        print("tv", tv)
         lst.append(vv)
+        tv = int(t, 2)
         if tv == 4:
-            # print("v", v)
             cs = ''
-            print("idx", idx)
             while True:
                 c = b[idx + 1:idx + 5]
                 last = b[idx] == '0'
                 cs += c
-                # print(c)
                 idx += 5
                 if last:
                     break
                 if idx > len(b):
                     print("Err")
                     break
-                print("idx", idx)
             n = int(cs, 2)
-
-            # lst.append(n)
-            print("n", n)
-        else:  # if tv in (3, 6):
+            vals.append(n)
+        else:
             i = b[idx]
             idx += 1
             if i == '0':
@@ -70,33 +60,43 @@ def parsepackage(idx, packagecnt=None, packagelen=None):
 
             if i == '0':
                 lv0 = int(l, 2)
-                print("lv0", lv0)
-                idx = parsepackage(idx, None, lv0)
+                (idx, valsi) = parsepackage(idx, None, lv0)
 
             if i == '1':
                 lv1 = int(l, 2)
-                print("lv1", lv1)
-                idx = parsepackage(idx, lv1, None)
-        # else:
-        #     print("cannot parse, unknown t at idx", t, idx)
-        #     return idx
-        #     # break
+                (idx, valsi) = parsepackage(idx, lv1, None)
+
+            vo = 0
+            if tv == 0:
+                vo = sum(valsi)
+            elif tv == 1:
+                vo = math.prod(valsi)
+            elif tv == 2:
+                vo = min(valsi)
+            elif tv == 3:
+                vo = max(valsi)
+            elif tv == 5:
+                vo = 1 if valsi[0] > valsi[1] else 0
+            elif tv == 6:
+                vo = 1 if valsi[0] < valsi[1] else 0
+            elif tv == 7:
+                vo = 1 if valsi[0] == valsi[1] else 0
+            vals.append(vo)
         cnt += 1
-        if packagecnt != None:
+        if packagecnt is not None:
             if cnt == packagecnt:
-                return idx
-        elif packagelen != None:
+                return idx, vals
+        elif packagelen is not None:
             if idx - firstidx == packagelen:
-                return idx
+                return idx, vals
         else:
-            return idx
+            return idx, vals
 
 
 idx = 0
-# len(b)
 while idx < len(b):
-    idx = parsepackage(idx)
+    (idx, vals) = parsepackage(idx)
     if len(b) - idx < 3 or b[idx:idx + 3] == '000':
-        print("break!")
         break
-print(sum(lst))
+print(sum(lst))  # 999
+print(vals[0])  # 3408662834145
