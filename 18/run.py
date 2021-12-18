@@ -1,94 +1,145 @@
 import math
 
 inp = [line.strip() for line in open('sample.txt', 'r')]
-
 inp = [line.strip() for line in open('sample2.txt', 'r')]
 inp = [line.strip() for line in open('sample3.txt', 'r')]
-
 inp = [line.strip() for line in open('input.txt', 'r')]
 
 LEFT, RIGHT, VAL = 0, 1, 2
+nodes = dict()
 
-node, ncnt = dict(), 0
 
-
-def processnode(l, idx, nidx):
-    global ncnt
-    global node
-    # left
-    # print(f"process {idx} {l[idx]}")
+def createTree(l, idx, nidx):
     if l[idx] == '[':
-        ncnt += 1
-        node[ncnt] = {LEFT: None, RIGHT: None, VAL: None}
-        node[nidx][LEFT] = ncnt
-        idx = processnode(l, idx + 1, ncnt)
-        # print("idx", idx, l[idx])
+        ncnt = len(nodes)
+        nodes[ncnt] = {LEFT: None, RIGHT: None, VAL: None}
+        nodes[nidx][LEFT] = ncnt
+        idx = createTree(l, idx + 1, ncnt)
         assert (l[idx] == ',')
-        # idx += 1
-        ncnt += 1
-        node[ncnt] = {LEFT: None, RIGHT: None, VAL: None}
-        node[nidx][RIGHT] = ncnt
-        idx = processnode(l, idx + 1, ncnt)
+        ncnt = len(nodes)
+        nodes[ncnt] = {LEFT: None, RIGHT: None, VAL: None}
+        nodes[nidx][RIGHT] = ncnt
+        idx = createTree(l, idx + 1, ncnt)
         assert (l[idx] == ']')
-        # idx = processnode(l, idx + 1)
         idx += 1
     else:
         sv = ''
         while '0' <= l[idx] <= '9':
             sv += l[idx]
             idx += 1
-        node[nidx][VAL] = int(sv)
-        # print(sv)
+        nodes[nidx][VAL] = int(sv)
     return idx
 
 
-def p_string(nidx):
-    global node
-    s = "["
-
-    v = node[nidx][VAL]
+def stringTree(nidx):
+    v = nodes[nidx][VAL]
     if v is not None:
         return str(v)
     else:
-        le = node[nidx][LEFT]
-        ri = node[nidx][RIGHT]
+        le = nodes[nidx][LEFT]
+        ri = nodes[nidx][RIGHT]
 
-        v = "[" + p_string(le) + "," + p_string(ri) + "]"
+        v = "[" + stringTree(le) + "," + stringTree(ri) + "]"
         return v
 
 
-def print_tree(nidx):
-    print(p_string(nidx))
+def printTree(nidx):
+    print(stringTree(nidx))
 
 
 def add_tree(nidxl, nidxr):
-    global node
-    global ncnt
-
-    ncnt += 1
-    node[ncnt] = {LEFT: nidxl, RIGHT: nidxr, VAL: None}
+    ncnt = len(nodes)
+    nodes[ncnt] = {LEFT: nidxl, RIGHT: nidxr, VAL: None}
     return ncnt
 
 
-def create(s):
-    global ncnt
-    global node
-
-    ncnt += 1
+def createTreeFromString(s):
+    ncnt = len(nodes)
     nidx = ncnt
-    node[nidx] = {LEFT: None, RIGHT: None, VAL: None}
-    processnode(s, 0, nidx)
+    nodes[nidx] = {LEFT: None, RIGHT: None, VAL: None}
+    createTree(s, 0, nidx)
     return nidx
 
 
-def explode(nidx):
-    while True:
-        if not explode_onetime(nidx):
-            break
-    return nidx
+def explode_onetime(nidx):
+    global nextLeft, nextRight
+    global nextLeftV, nextRightV
+    global exploded
+    nextLeft = None
+    nextRight = None
+    exploded = 0
+    explode(nidx, 0)
+    if exploded:
+        if nextLeft != None:
+            nodes[nextLeft][VAL] += nextLeftV
+        if nextRight != None:
+            nodes[nextRight][VAL] += nextRightV
+    return exploded
 
 
-def p_reduce(nidx):
+def explode(nidx, level):
+    global nextLeft, nextRight
+    global nextLeftV, nextRightV
+    global exploded
+
+    v = nodes[nidx][VAL]
+    if v is not None:
+        if not exploded:
+            nextLeft = nidx
+        if exploded and nextRight == None:
+            nextRight = nidx
+        return None
+    else:
+        le = nodes[nidx][LEFT]
+        ri = nodes[nidx][RIGHT]
+        if not exploded and level > 3 and nodes[le][VAL] != None and nodes[ri][VAL] != None:
+            lev = nodes[le][VAL]
+            riv = nodes[ri][VAL]
+            # print(f"explode {lev} and {riv}")
+            nextLeftV = lev
+            nextRightV = riv
+            nodes[nidx][LEFT] = None
+            nodes[nidx][RIGHT] = None
+            nodes[nidx][VAL] = 0
+            exploded = 1
+        else:
+            explode(le, level + 1)
+            explode(ri, level + 1)
+
+
+def split_onetime(nidx):
+    global split
+    split = False
+    split(nidx)
+    return split
+
+
+def split(nidx):
+    global split
+
+    v = nodes[nidx][VAL]
+    if v is not None:
+        if not split and v >= 10:
+            split = True
+            (lv, rv) = (math.floor(v / 2), math.ceil(v / 2))
+            # print(f"{v} split into {lv} {rv}")
+            ncnt = len(nodes)
+            nodes[nidx][LEFT] = ncnt
+            nodes[ncnt] = {LEFT: None, RIGHT: None, VAL: lv}
+
+            ncnt = len(nodes)
+            nodes[nidx][RIGHT] = ncnt
+            nodes[ncnt] = {LEFT: None, RIGHT: None, VAL: rv}
+
+            nodes[nidx][VAL] = None
+    else:
+        le = nodes[nidx][LEFT]
+        ri = nodes[nidx][RIGHT]
+        split(le)
+        split(ri)
+
+
+def reduce(nidx):
     while True:
         anyop = False
         while True:
@@ -102,154 +153,57 @@ def p_reduce(nidx):
             break
 
 
-def explode_onetime(nidx):
-    global node
-    global nextleft, nextrigt
-    global nextleftv, nextrightv
-    global exploded
-    nextleft = None
-    nextrigt = None
-    exploded = 0
-    p_explode(nidx, 0)
-    # print(f"nexts: {nextleft} / {nextrigt} / {nextleftv} / {nextrightv} / {exploded}")
-    # print("f{node[nextleft][VAL]} / {node[nextrigt][VAL]}")
-    if exploded:
-        if nextleft != None:
-            node[nextleft][VAL] += nextleftv
-        if nextrigt != None:
-            node[nextrigt][VAL] += nextrightv
-    return exploded
-
-
-def p_explode(nidx, level):
-    global node
-    global nextleft, nextrigt
-    global nextleftv, nextrightv
-    global exploded
-
-    # print(f"epxloded:{exploded} {level} {nidx}")
-    v = node[nidx][VAL]
-    if v is not None:
-        if not exploded:
-            nextleft = nidx
-            # print(f"nextleft:{nextleft}")
-        if exploded and nextrigt == None:
-            nextrigt = nidx
-        return None
-    else:
-        le = node[nidx][LEFT]
-        ri = node[nidx][RIGHT]
-        if not exploded and level > 3 and node[le][VAL] != None and node[ri][VAL] != None:
-            lev = node[le][VAL]
-            riv = node[ri][VAL]
-            print(f"explode {lev} and {riv}")
-            nextleftv = lev
-            nextrightv = riv
-            node[nidx][LEFT] = None
-            node[nidx][RIGHT] = None
-            node[nidx][VAL] = 0
-            exploded = 1
-        else:
-            p_explode(le, level + 1)
-            p_explode(ri, level + 1)
-
-
-def p_split(nidx):
-    global node
-    global splitted
-    global ncnt
-
-    # print(f"splitted:{splitted}  {nidx}")
-    v = node[nidx][VAL]
-    if v is not None:
-        # print(f"v={v}")
-        if not splitted and v >= 10:
-            splitted = True
-            (lv, rv) = (math.floor(v / 2), math.ceil(v / 2))
-            print(f"{v} split into {lv} {rv}")
-            ncnt += 1
-            node[nidx][LEFT] = ncnt
-            node[ncnt] = {LEFT: None, RIGHT: None, VAL: lv}
-
-            ncnt += 1
-            node[nidx][RIGHT] = ncnt
-            node[ncnt] = {LEFT: None, RIGHT: None, VAL: rv}
-
-            node[nidx][VAL] = None
-            # newnodeidx = create(f"[{lv},{rv}]")
-            # creat
-            # print(f"nextleft:{nextleft}")
-            # nextrigt = nidx
-    else:
-        le = node[nidx][LEFT]
-        ri = node[nidx][RIGHT]
-        p_split(le)
-        p_split(ri)
-
-
-def split_onetime(nidx):
-    global node
-    global splitted
-    splitted = False
-    p_split(nidx)
-    # print(f"nexts: {nextleft} / {nextrigt} / {nextleftv} / {nextrightv} / {exploded}")
-    # print("f{node[nextleft][VAL]} / {node[nextrigt][VAL]}")
-    return splitted
-
-
 sample = "[[[[[9,8],1],2],3],4]"
-nidx = create(sample)
+nidx = createTreeFromString(sample)
 explode_onetime(nidx)
-assert (p_string(nidx) == "[[[[0,9],2],3],4]")
-print_tree(nidx)
+assert (stringTree(nidx) == "[[[[0,9],2],3],4]")
+printTree(nidx)
 
 sample = "[7,[6,[5,[4,[3,2]]]]]"
-nidx = create(sample)
+nidx = createTreeFromString(sample)
 explode_onetime(nidx)
-assert (p_string(nidx) == "[7,[6,[5,[7,0]]]]")
-print_tree(nidx)
+assert (stringTree(nidx) == "[7,[6,[5,[7,0]]]]")
+printTree(nidx)
 
 sample = "[[6,[5,[4,[3,2]]]],1]"
-nidx = create(sample)
+nidx = createTreeFromString(sample)
 explode_onetime(nidx)
-assert (p_string(nidx) == "[[6,[5,[7,0]]],3]")
-print_tree(nidx)
+assert (stringTree(nidx) == "[[6,[5,[7,0]]],3]")
+printTree(nidx)
 
 sample = "[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]"
-nidx = create(sample)
+nidx = createTreeFromString(sample)
 explode_onetime(nidx)
-assert (p_string(nidx) == "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]")
-print_tree(nidx)
+assert (stringTree(nidx) == "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]")
+printTree(nidx)
 
 sample = "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]"
-nidx = create(sample)
+nidx = createTreeFromString(sample)
 explode_onetime(nidx)
-assert (p_string(nidx) == "[[3,[2,[8,0]]],[9,[5,[7,0]]]]")
-print_tree(nidx)
+assert (stringTree(nidx) == "[[3,[2,[8,0]]],[9,[5,[7,0]]]]")
+printTree(nidx)
 
 sample = "[[[[0,7],4],[15,[0,13]]],[1,1]]"
-nidx = create(sample)
+nidx = createTreeFromString(sample)
 split_onetime(nidx)
 split_onetime(nidx)
-assert (p_string(nidx) == "[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]")
-print_tree(nidx)
+assert (stringTree(nidx) == "[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]")
+printTree(nidx)
 
 sample = "[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]"
-nidx = create(sample)
-p_reduce(nidx)
-assert (p_string(nidx) == "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
-print_tree(nidx)
+nidx = createTreeFromString(sample)
+reduce(nidx)
+assert (stringTree(nidx) == "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
+printTree(nidx)
 
 
 def p_mag(nidx):
-    global node
-
-    v = node[nidx][VAL]
+    v = nodes[nidx][VAL]
     if v is not None:
         return v
     else:
-        le = node[nidx][LEFT]
-        ri = node[nidx][RIGHT]
+        le = nodes[nidx][LEFT]
+        ri = nodes[nidx][RIGHT]
 
         v = 3 * p_mag(le) + 2 * p_mag(ri)
         return v
@@ -257,25 +211,24 @@ def p_mag(nidx):
 
 root = None
 for l in inp:
-    t = create(l)
-    print_tree(t)
+    t = createTreeFromString(l)
+    # printTree(t)
     if root is None:
         root = t
         continue
     root = add_tree(root, t)
-    p_reduce(root)
+    reduce(root)
 
-# print_tree(root)
 print(p_mag(root))  # 3486
 
-maxmag = 0
+magMax = 0
 for l0 in inp:
     for l1 in inp:
         if l0 != l1:
-            c0 = create(l0)
-            c1 = create(l1)
+            c0 = createTreeFromString(l0)
+            c1 = createTreeFromString(l1)
             a01 = add_tree(c0, c1)
-            p_reduce(a01)
+            reduce(a01)
             mag = p_mag(a01)
-            maxmag = max(mag, maxmag)
-print(maxmag)  # 4747
+            magMax = max(mag, magMax)
+print(magMax)  # 4747
