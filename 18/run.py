@@ -64,35 +64,35 @@ def createTreeFromString(s):
 def explode_onetime(nidx):
     global nextLeft, nextRight
     global nextLeftV, nextRightV
-    global exploded
+    global haveExplode
     nextLeft = None
     nextRight = None
-    exploded = 0
+    haveExplode = 0
     explode(nidx, 0)
-    if exploded:
+    if haveExplode:
         if nextLeft != None:
             nodes[nextLeft][VAL] += nextLeftV
         if nextRight != None:
             nodes[nextRight][VAL] += nextRightV
-    return exploded
+    return haveExplode
 
 
 def explode(nidx, level):
     global nextLeft, nextRight
     global nextLeftV, nextRightV
-    global exploded
+    global haveExplode
 
     v = nodes[nidx][VAL]
     if v is not None:
-        if not exploded:
+        if not haveExplode:
             nextLeft = nidx
-        if exploded and nextRight == None:
+        if haveExplode and nextRight == None:
             nextRight = nidx
         return None
     else:
         le = nodes[nidx][LEFT]
         ri = nodes[nidx][RIGHT]
-        if not exploded and level > 3 and nodes[le][VAL] != None and nodes[ri][VAL] != None:
+        if not haveExplode and level > 3 and nodes[le][VAL] != None and nodes[ri][VAL] != None:
             lev = nodes[le][VAL]
             riv = nodes[ri][VAL]
             # print(f"explode {lev} and {riv}")
@@ -101,26 +101,26 @@ def explode(nidx, level):
             nodes[nidx][LEFT] = None
             nodes[nidx][RIGHT] = None
             nodes[nidx][VAL] = 0
-            exploded = 1
+            haveExplode = 1
         else:
             explode(le, level + 1)
             explode(ri, level + 1)
 
 
 def split_onetime(nidx):
-    global split
-    split = False
-    split(nidx)
-    return split
+    global haveSplit
+    haveSplit = False
+    splitNode(nidx)
+    return haveSplit
 
 
-def split(nidx):
-    global split
+def splitNode(nidx):
+    global haveSplit
 
     v = nodes[nidx][VAL]
     if v is not None:
-        if not split and v >= 10:
-            split = True
+        if not haveSplit and v >= 10:
+            haveSplit = True
             (lv, rv) = (math.floor(v / 2), math.ceil(v / 2))
             # print(f"{v} split into {lv} {rv}")
             ncnt = len(nodes)
@@ -135,8 +135,8 @@ def split(nidx):
     else:
         le = nodes[nidx][LEFT]
         ri = nodes[nidx][RIGHT]
-        split(le)
-        split(ri)
+        splitNode(le)
+        splitNode(ri)
 
 
 def reduce(nidx):
