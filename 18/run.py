@@ -110,11 +110,11 @@ def explode(nidx, level):
 def split_onetime(nidx):
     global haveSplit
     haveSplit = False
-    splitNode(nidx)
+    split(nidx)
     return haveSplit
 
 
-def splitNode(nidx):
+def split(nidx):
     global haveSplit
 
     v = nodes[nidx][VAL]
@@ -135,8 +135,8 @@ def splitNode(nidx):
     else:
         le = nodes[nidx][LEFT]
         ri = nodes[nidx][RIGHT]
-        splitNode(le)
-        splitNode(ri)
+        split(le)
+        split(ri)
 
 
 def reduce(nidx):
