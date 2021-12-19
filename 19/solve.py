@@ -24,6 +24,9 @@ def parse():
 
 originalScanners = parse()
 
+pAdd = lambda p1, p2: [p1[0] + p2[0], p1[1] + p2[1], p1[2] + p2[2]]
+pSub = lambda p1, p2: [p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]]
+
 rx = lambda x, y, z: (x, -z, y)
 ry = lambda x, y, z: (-z, y, x)
 rz = lambda x, y, z: (-y, x, z)
@@ -54,7 +57,7 @@ POS = 24
 def rotateScanner(a, rotateIdx):
     ret = []
     for be in a:  # each beacon
-        newbe = list(allPositions(be[0], be[1], be[2]))[rotateIdx]
+        newbe = list(allPositions(*be))[rotateIdx]
         ret.append(newbe)
     return ret
 
@@ -66,7 +69,7 @@ def findCommon(a, b):  # between two scanners a and b
     for pa in a:
         for pb in b:
             for (idx, pbv) in enumerate(allPositions(pb[0], pb[1], pb[2])):
-                dx = pbv[0] - pa[0]
+                (dx, dy, dz) = pSub(pbv, pa)
                 diffs[idx][dx] += 1
     for idx in range(POS):
         common = [k for k, v in diffs[idx].items() if v >= 12]
@@ -80,9 +83,7 @@ def findCommon(a, b):  # between two scanners a and b
                 for pb in b:
                     pbv = rotateScanner([pb], idx)[0]
 
-                    dx = pbv[0] - pa[0]
-                    dy = pbv[1] - pa[1]
-                    dz = pbv[2] - pa[2]
+                    (dx, dy, dz) = pSub(pbv, pa)
                     if dx == diffx:
                         if diffy is None:
                             diffy = dy
@@ -96,8 +97,7 @@ def findCommon(a, b):  # between two scanners a and b
 
 scanners = dict()
 scanners[0] = originalScanners[0].copy()
-offsets = dict()
-offsets[0] = (0, 0, 0)
+offsets = {0: (0, 0, 0)}
 while len(scanners) < len(originalScanners):
     for idxa in range(len(originalScanners)):
         if idxa not in scanners.keys():
@@ -108,24 +108,18 @@ while len(scanners) < len(originalScanners):
                 continue
             for (btorotate, commonab, diff) in findCommon(scanner, originalScanners[idxb]):
                 scanners[idxb] = btorotate
-                offsets[idxb] = ( \
-                    diff[0] + offsets[idxa][0], \
-                    diff[1] + offsets[idxa][1], \
-                    diff[2] + offsets[idxa][2])
+                offsets[idxb] = pAdd(diff, offsets[idxa])
 
 all = set()
 for idx, scanner in scanners.items():
     for be in scanner:  # each beacon
-        newbe = (be[0] - offsets[idx][0], be[1] - offsets[idx][1], be[2] - offsets[idx][2])
+        newbe = tuple(pSub(be, offsets[idx]))
         all.add(newbe)
 print(len(all))  # 381
-assert (len(all) == 381)
 
 distMax = 0
 for idxa, idxb in permutations(range(len(scanners)), 2):
-    dist = abs(offsets[idxa][0] - offsets[idxb][0]) + \
-           abs(offsets[idxa][1] - offsets[idxb][1]) + \
-           abs(offsets[idxa][2] - offsets[idxb][2])
+    dist = pSub(offsets[idxa], offsets[idxb])
+    dist = abs(dist[0]) + abs(dist[1]) + abs(dist[2])
     distMax = max(dist, distMax)
 print(distMax)  # 12201
-assert (distMax == 12201)
