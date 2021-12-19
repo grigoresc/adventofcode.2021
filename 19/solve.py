@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from itertools import permutations, combinations, product
+from itertools import permutations
 
 inp = [line.strip() for line in open('sample.txt', 'r')]
 inp = [line.strip() for line in open('input.txt', 'r')]
@@ -32,67 +32,50 @@ ry = lambda x, y, z: (-z, y, x)
 rz = lambda x, y, z: (-y, x, z)
 
 
-def allOrientations(x, y, z):
-    pos = (x, y, z)
-    for tx in range(4):
+def allOrientations(pos):
+    for tx in range(4):  # rotations around x
         cpos = pos
         for _ in range(tx):
             cpos = rx(*cpos)
-        for _ in range(4):
+        for _ in range(4):  # rotations around z
             cpos = rz(*cpos)
             yield cpos
 
-    for ty in [1, 3]:
+    for ty in [1, 3]:  # rotations around y
         cpos = pos
         for _ in range(ty):
             cpos = ry(*cpos)
-        for _ in range(4):
+        for _ in range(4):  # rotations around z
             cpos = rz(*cpos)
             yield cpos
 
 
-POS = 24
-
-
-def rotateScanner(a, rotionIdx):
-    ret = []
-    for be in a:  # each beacon
-        newbe = list(allOrientations(*be))[rotionIdx]
-        ret.append(newbe)
-    return ret
-
-
 def findCommon(a, b):  # between two scanners a and b
-    diffs = []
-    for rotationIdx in range(POS):
-        diffs.append(defaultdict(int))
-    for pa in a:
-        for pb in b:
-            for (rotationIdx, pbv) in enumerate(allOrientations(pb[0], pb[1], pb[2])):
-                (dx, dy, dz) = subCoord(pbv, pa)
+    diffs = dict()
+    for rotationIdx, rotatedb in enumerate(zip(*map(allOrientations, b))):  # all possible rotations for b
+        diffs[rotationIdx] = defaultdict(int)
+        for coorda in a:
+            for coordb in rotatedb:
+                (dx, dy, dz) = subCoord(coordb, coorda)
                 diffs[rotationIdx][dx] += 1
-    for rotationIdx in range(POS):
         common = [k for k, v in diffs[rotationIdx].items() if v >= 12]
         for diffx in common:
             diffy = None
             diffz = None
-
             # find common
             overlap = []
-            for pa in a:
-                for pb in b:
-                    pbv = rotateScanner([pb], rotationIdx)[0]
-
-                    (dx, dy, dz) = subCoord(pbv, pa)
+            for coorda in a:
+                for coordb in rotatedb:
+                    (dx, dy, dz) = subCoord(coordb, coorda)
                     if dx == diffx:
                         if diffy is None:
                             diffy = dy
                         if diffz is None:
                             diffz = dz
                         if diffy == dy and diffz == dz:
-                            overlap.append(pa)
+                            overlap.append(coorda)
             if len(set(overlap)) >= 12:
-                yield rotateScanner(b, rotationIdx), (diffx, diffy, diffz)
+                yield rotatedb, (diffx, diffy, diffz)
 
 
 scanners = dict()
