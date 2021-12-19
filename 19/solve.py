@@ -4,7 +4,7 @@ from collections import defaultdict
 from itertools import permutations, combinations, product
 
 inp = [line.strip() for line in open('sample.txt', 'r')]
-# inp = [line.strip() for line in open('input.txt', 'r')]
+inp = [line.strip() for line in open('input.txt', 'r')]
 idx = 0
 p = []
 while idx < len(inp):
@@ -124,6 +124,14 @@ POS = 24
 #         return
 #
 #
+def rotateScanner(a, rotateIdx):
+    ret = []
+    for be in a:
+        newbe = list(pos(be[0], be[1], be[2]))[rotateIdx]
+        ret.append(newbe)
+    return ret
+
+
 def findCommon(a, b):  # global idx, pb
     diffs = []
     for idx in range(POS):
@@ -149,7 +157,8 @@ def findCommon(a, b):  # global idx, pb
             common_ab = []
             for pa in a:
                 for pb in b:
-                    pbv = list(pos(pb[0], pb[1], pb[2]))[idx]
+                    # pbv = list(pos(pb[0], pb[1], pb[2]))[idx]
+                    pbv = rotateScanner([pb], idx)[0]
 
                     dx = pbv[0] - pa[0]
                     dy = pbv[1] - pa[1]
@@ -167,63 +176,108 @@ def findCommon(a, b):  # global idx, pb
                         # else:
                         #     print("not common!")
             if len(set(common_ab)) >= 12:
-                print(f"common ab: {c} {diffx} {diffy} {diffz} {common_ab}")
-                yield idx, common_ab, (diffx, diffy, diffz)
+                # print(f"common ab: {c} {diffx} {diffy} {diffz} {common_ab}")
+                yield rotateScanner(b, idx), common_ab, (diffx, diffy, diffz)
     # return None, None
 
 
-# a = p[0]
-# print(a)
-# for na in rotateset(a):
-#     print(len(na))
-#     print(na.pop())
-# b = p[1]
-# list(findCommon(a, b))
-# processed = set()
+scanners = dict()
+scanners[0] = p[0].copy()
+sdiffs = dict()
+sdiffs[0] = (0, 0, 0)
+while len(scanners) < len(p):
+    for idxa in range(len(p)):
+        if idxa not in scanners.keys():
+            continue
+        scanner = scanners[idxa]
+        # print(scanner)
+        # print(f"process {idxa}")
+        for idxb in range(len(p)):
+            if idxb in scanners.keys():
+                # print(f"skip {idxb}")
+                continue
+            # print(f"compare {idxa} wiht {idxb}")
+            for (btorotate, commonab, diffs) in findCommon(scanner, p[idxb]):
+                # print(f"finded and adding {idxb}")
+                combined = scanner + btorotate
+                scanners[idxb] = btorotate
+                sdiffs[idxb] = ( \
+                    diffs[0] + sdiffs[idxa][0], \
+                    diffs[1] + sdiffs[idxa][1], \
+                    diffs[2] + sdiffs[idxa][2])
+
+all = set()
+for idx, scanner in scanners.items():
+    for be in scanner:
+        newbe = (be[0] - sdiffs[idx][0], be[1] - sdiffs[idx][1], be[2] - sdiffs[idx][2])
+        all.add(newbe)
+print(len(all))  # 381
+
+distMax = 0
+distMin = 100000
+for idxa, idxb in permutations(range(len(scanners)), 2):
+    dist = abs(sdiffs[idxa][0] - sdiffs[idxb][0]) + \
+           abs(sdiffs[idxa][1] - sdiffs[idxb][1]) + \
+           abs(sdiffs[idxa][2] - sdiffs[idxb][2])
+    distMax = max(abs(dist), distMax)
+    distMin = min(abs(dist), distMin)
+    print(dist)
+print(distMax)  # 12201
+# exit()
+
+# # print("a")
+# # a = p[0]
+# # print(a)
+# # for na in rotateset(a):
+# #     print(len(na))
+# #     print(na.pop())
+# # b = p[1]
+# # list(findCommon(a, b))
+# # processed = set()
+# # while len(rel) < len(p):
+# results = dict()
+# for idxa, idxb in permutations(range(len(p)), 2):
+#     # if idxa not in rel or (idxa, idxb) in processed:
+#     #     continue
+#     # if idxb not in rel.keys():
+#     a = p[idxa]
+#     b = p[idxb]
+#     # processed.add((idxa, idxb))
+#     # for na in rotateset(a):
+#     print(f"common for {idxa},{idxb}")
+#     for (rottype, commona, diffs) in findCommon(a, b):
+#         print(f"found for common for {idxa},{idxb}")
+#         results[(idxa, idxb)] = (rottype, commona, diffs)
+#         # print(diffs)
+#         # rel[idxb] = (rel[idxa][0] + diffs[0], rel[idxa][1] + diffs[1], rel[idxa][2] + diffs[2])
+#
+# rel = defaultdict()
+# rel[0] = (0, 0, 0)
+# # probes = []
 # while len(rel) < len(p):
-results = dict()
-for idxa, idxb in permutations(range(len(p)), 2):
-    # if idxa not in rel or (idxa, idxb) in processed:
-    #     continue
-    # if idxb not in rel.keys():
-    a = p[idxa]
-    b = p[idxb]
-    # processed.add((idxa, idxb))
-    # for na in rotateset(a):
-    print(f"common for {idxa},{idxb}")
-    for (rottype, commona, diffs) in findCommon(a, b):
-        print(f"found for common for {idxa},{idxb}")
-        results[(idxa, idxb)] = (rottype, commona, diffs)
-        # print(diffs)
-        # rel[idxb] = (rel[idxa][0] + diffs[0], rel[idxa][1] + diffs[1], rel[idxa][2] + diffs[2])
-
-rel = defaultdict()
-rel[0] = (0, 0, 0)
-# probes = []
-while len(rel) < len(p):
-    for res in results.items():
-        (idxa, idxb) = res[0]
-        (rottype, commona, diffs) = res[1]
-        print(f"cal {idxa}, {idxb}")
-
-        if idxa not in rel:
-            print(f"Skip {idxa}")
-            continue
-        if idxb in rel:
-            print(f"Skip already calculated {idxb}")
-            continue
-        rel[idxb] = (rel[idxa][0] + diffs[0], \
-                     rel[idxa][1] + diffs[1], \
-                     rel[idxa][2] + diffs[2])
-        # print("Add")
-        # for c in commona:
-        #     rprob = (c[0] - rel[idxa][0], \
-        #              c[1] - rel[idxa][1], \
-        #              c[2] - rel[idxa][2])
-        #     probes.append(rprob)
-
-all = []
-for sc in range(len(p)):
-    for be in p[sc]:
-        (x, y, z) = (be[0] - rel[sc][0], be[1] - rel[sc][1], be[2] - rel[sc][2])
-        all.append((x, y, z))
+#     for res in results.items():
+#         (idxa, idxb) = res[0]
+#         (rottype, commona, diffs) = res[1]
+#         print(f"cal {idxa}, {idxb}")
+#
+#         if idxa not in rel:
+#             print(f"Skip {idxa}")
+#             continue
+#         if idxb in rel:
+#             print(f"Skip already calculated {idxb}")
+#             continue
+#         rel[idxb] = (rel[idxa][0] + diffs[0], \
+#                      rel[idxa][1] + diffs[1], \
+#                      rel[idxa][2] + diffs[2])
+#         # print("Add")
+#         # for c in commona:
+#         #     rprob = (c[0] - rel[idxa][0], \
+#         #              c[1] - rel[idxa][1], \
+#         #              c[2] - rel[idxa][2])
+#         #     probes.append(rprob)
+#
+# # all = []
+# # for sc in range(len(p)):
+# #     for be in p[sc]:
+# #         (x, y, z) = (be[0] - rel[sc][0], be[1] - rel[sc][1], be[2] - rel[sc][2])
+# #         all.append((x, y, z))
