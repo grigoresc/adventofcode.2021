@@ -24,15 +24,15 @@ def parse():
 
 originalScanners = parse()
 
-pAdd = lambda p1, p2: [p1[0] + p2[0], p1[1] + p2[1], p1[2] + p2[2]]
-pSub = lambda p1, p2: [p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]]
+addCoord = lambda p1, p2: [p1[0] + p2[0], p1[1] + p2[1], p1[2] + p2[2]]
+subCoord = lambda p1, p2: [p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]]
 
 rx = lambda x, y, z: (x, -z, y)
 ry = lambda x, y, z: (-z, y, x)
 rz = lambda x, y, z: (-y, x, z)
 
 
-def allPositions(x, y, z):
+def allOrientations(x, y, z):
     pos = (x, y, z)
     for tx in range(4):
         cpos = pos
@@ -54,45 +54,45 @@ def allPositions(x, y, z):
 POS = 24
 
 
-def rotateScanner(a, rotateIdx):
+def rotateScanner(a, rotionIdx):
     ret = []
     for be in a:  # each beacon
-        newbe = list(allPositions(*be))[rotateIdx]
+        newbe = list(allOrientations(*be))[rotionIdx]
         ret.append(newbe)
     return ret
 
 
 def findCommon(a, b):  # between two scanners a and b
     diffs = []
-    for idx in range(POS):
+    for rotationIdx in range(POS):
         diffs.append(defaultdict(int))
     for pa in a:
         for pb in b:
-            for (idx, pbv) in enumerate(allPositions(pb[0], pb[1], pb[2])):
-                (dx, dy, dz) = pSub(pbv, pa)
-                diffs[idx][dx] += 1
-    for idx in range(POS):
-        common = [k for k, v in diffs[idx].items() if v >= 12]
+            for (rotationIdx, pbv) in enumerate(allOrientations(pb[0], pb[1], pb[2])):
+                (dx, dy, dz) = subCoord(pbv, pa)
+                diffs[rotationIdx][dx] += 1
+    for rotationIdx in range(POS):
+        common = [k for k, v in diffs[rotationIdx].items() if v >= 12]
         for diffx in common:
             diffy = None
             diffz = None
 
             # find common
-            common_ab = []
+            overlap = []
             for pa in a:
                 for pb in b:
-                    pbv = rotateScanner([pb], idx)[0]
+                    pbv = rotateScanner([pb], rotationIdx)[0]
 
-                    (dx, dy, dz) = pSub(pbv, pa)
+                    (dx, dy, dz) = subCoord(pbv, pa)
                     if dx == diffx:
                         if diffy is None:
                             diffy = dy
                         if diffz is None:
                             diffz = dz
                         if diffy == dy and diffz == dz:
-                            common_ab.append(pa)
-            if len(set(common_ab)) >= 12:
-                yield rotateScanner(b, idx), common_ab, (diffx, diffy, diffz)
+                            overlap.append(pa)
+            if len(set(overlap)) >= 12:
+                yield rotateScanner(b, rotationIdx), (diffx, diffy, diffz)
 
 
 scanners = dict()
@@ -106,20 +106,20 @@ while len(scanners) < len(originalScanners):
         for idxb in range(len(originalScanners)):
             if idxb in scanners.keys():
                 continue
-            for (btorotate, commonab, diff) in findCommon(scanner, originalScanners[idxb]):
-                scanners[idxb] = btorotate
-                offsets[idxb] = pAdd(diff, offsets[idxa])
+            for (rotatedb, diff) in findCommon(scanner, originalScanners[idxb]):
+                scanners[idxb] = rotatedb
+                offsets[idxb] = addCoord(diff, offsets[idxa])
 
 all = set()
 for idx, scanner in scanners.items():
     for be in scanner:  # each beacon
-        newbe = tuple(pSub(be, offsets[idx]))
+        newbe = tuple(subCoord(be, offsets[idx]))
         all.add(newbe)
 print(len(all))  # 381
 
 distMax = 0
 for idxa, idxb in permutations(range(len(scanners)), 2):
-    dist = pSub(offsets[idxa], offsets[idxb])
+    dist = subCoord(offsets[idxa], offsets[idxb])
     dist = abs(dist[0]) + abs(dist[1]) + abs(dist[2])
     distMax = max(dist, distMax)
 print(distMax)  # 12201
