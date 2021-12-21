@@ -1,102 +1,99 @@
 import re
 from collections import defaultdict
-from functools import reduce
 from itertools import permutations, repeat, combinations, product
 
 inp = [line.strip() for line in open('sample.txt', 'r')]
-# inp = [line.strip() for line in open('input.txt', 'r')]
+inp = [line.strip() for line in open('input.txt', 'r')]
 
 (_, p1) = list(map(int, re.findall(r'-?\d+', inp[0])))
 (_, p2) = list(map(int, re.findall(r'-?\d+', inp[1])))
+startpos = [p1, p2]
 
-pos = [p1, p2]
+
+def nextpos(cpos, d):
+    cpos += d
+    cpos = cpos if cpos <= 10 else (10 if cpos % 10 == 0 else cpos % 10)  # funny!
+    return cpos
 
 
-def part1():
-    global allt, p, d, ct, dt, _
-    allt = [0, 0]
+def part1(pos):
+    scores = [0, 0]
     p = 0
     d = 0
     ct = 0
-    while allt[0] < 1000 and allt[1] < 1000:
+    while scores[0] < 1000 and scores[1] < 1000:
         dt = 0
         for _ in range(3):
             d += 1
             d = d if d <= 100 else d % 100
-            # print(f"rolls {d}")
             dt += d
             ct += 1
-        pos[p] += dt
-        # print(f"possible pos {pos[p]}")
-        pos[p] = pos[p] if pos[p] <= 10 else (10 if pos[p] % 10 == 0 else pos[p] % 10)  # funny!
-        allt[p] += pos[p]
-        # print(f"{ct} player {p} rolls {dt} moves to {pos[p]} has {sco[p]}")
+        pos[p] = nextpos(pos[p], dt)
+        scores[p] += pos[p]
         p = (p + 1) % 2
-    # print(p, sco[p], ct)
-    print(allt[p] * ct)  # 805932
+
+    return scores[p] * ct
 
 
-# part1()
+def part2(pos):
+    dtimes = defaultdict(int)  # all possible dices (sum of three) and their occurence
+    for x, y, z in product([1, 2, 3], repeat=3):
+        dtimes[x + y + z] += 1
+    maxSteps = 10
+    allResults = []
+    for p in pos:
+        all = dict()
+        all[0] = defaultdict(list)
+        all[0][p].append((0, 1))
+        for stepsNo in range(1, maxSteps + 1):
+            starts = all[stepsNo - 1]
 
+            all[stepsNo] = defaultdict(list)
+            for (pos, lst) in starts.items():
+                for (score, cnt) in lst:
+                    if score >= 21:
+                        continue
+                    for d, times in dtimes.items():
 
-def play(pos, pred):
-    sco = 0
-    cpos = pos
-    already21 = False
-    for d in pred:
-        cpos += d
-        cpos = cpos if cpos <= 10 else (10 if cpos % 10 == 0 else cpos % 10)  # funny!
-        sco += cpos
-        if sco >= 21:
-            if already21:
-                # print(f"for {pos} and {pred} SKIP")
-                return (None, None)
-            else:
-                already21 = True
-    print(f"for {pos} and {pred} have {sco}")
-    return (cpos, sco)
+                        npos = nextpos(pos, d)
+                        nscore = score + npos
+                        ncnt = cnt * times
 
+                        found = False
+                        for idx, it in enumerate(all[stepsNo][npos]):
+                            if it[0] == nscore:
+                                all[stepsNo][npos][idx] = (nscore, ncnt + it[1])
+                                found = True
+                                break
+                        if not found:
+                            all[stepsNo][npos].append((nscore, ncnt))
+        allResults.append(all)
 
-maxSteps = 8
-dtimes = defaultdict(int)
-for x, y, z in product([1, 2, 3], repeat=3):
-    dtimes[x + y + z] += 1
-    print(x, y, z)
-
-alld = [3, 4, 5, 6, 7, 8, 9]  # all dices posibilities (3 times)
-allt = dict()  # all possible transitions from a 'pos' by 'number of steps' to 'another pos'
-for start in range(1, 10 + 1):
-    allt[start] = dict()
+    p1wins = 0
+    p2wins = 0
     for stepsNo in range(1, maxSteps + 1):
-        allt[start][stepsNo] = dict()  # defaultdict(int)
-        seqs = product(alld, repeat=stepsNo)
-        for seq in seqs:
-            times = 1
-            for d in seq:
-                times *= dtimes[d]
-            (cpos, csco) = play(start, seq)
-            if csco == None:
-                continue
-            if csco not in allt[start][stepsNo].keys():
-                allt[start][stepsNo][csco] = 0
-            allt[start][stepsNo][csco] += times
 
-p1wins = 0
-p2wins = 0
-for stepsNo in range(1, maxSteps + 1):
-    for csco1, cnt1 in allt[p1][stepsNo].items():
-        for csco2, cnt2 in allt[p2][stepsNo].items():
-            if csco1 >= 21 and csco2 < 21:
-                p1wins += cnt1 * cnt2
-            if csco1 < 21 and csco2 >= 21:
-                p2wins += cnt1 * cnt2
+        for pos1, lst1 in allResults[0][stepsNo].items():
+            for cso1, cnt1 in lst1:
 
-# expected
-# 341960390180808
-# 444356092776315
+                for pos2, lst2 in allResults[1][stepsNo].items():
+                    for cso2, cnt2 in lst2:
 
-# current - for 7 steps max
-# 257767355993576
-# 323600927041598
-# 271427679324384
-# 341948699931462
+                        if cso1 < 21 and cso2 >= 21:
+                            p2wins += cnt1 * cnt2
+
+    for stepsNo in range(2, maxSteps + 1):
+
+        for pos1, lst1 in allResults[0][stepsNo].items():
+            for cso1, cnt1 in lst1:
+
+                for pos2, lst2 in allResults[1][stepsNo - 1].items():
+                    for cso2, cnt2 in lst2:
+
+                        if cso1 >= 21 and cso2 < 21:
+                            p1wins += cnt1 * cnt2
+    return max(p1wins, p2wins)
+
+
+print(part1(startpos.copy()))  # 805932
+print(part2(startpos.copy()))  # 133029050096658
