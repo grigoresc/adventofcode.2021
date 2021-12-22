@@ -9,7 +9,7 @@ inp = [line.strip() for line in open('sample3.txt', 'r')]
 # inp = [line.strip() for line in open('input.txt', 'r')]
 
 
-def part1():
+def part1Run():
     cubes = []
     ons = []
     state1 = set()
@@ -42,10 +42,8 @@ def part1():
                     else:
                         if (x, y, z) in state1:
                             state1.remove((x, y, z))
-    print(len(state1))
+        yield state1
 
-
-# part1()
 
 cubes = []
 ons = []
@@ -73,12 +71,12 @@ def commonPos(xe1, xe2, xs1, xs2):
 
 
 def diffPos(xe1, xe2, xs1, xs2):
-    commonx = None
     ret = []
-    if xs1 <= xs2 <= xe1:
-        ret.append((xs1, xs2))
-    if xs1 <= xe2 <= xe1:
-        ret.append((xe2, xe1))
+    assert (xs1 < xe1)
+    if xs1 < xs2 <= xe1:
+        ret.append((xs1, xs2 - 1))
+    if xs1 <= xe2 < xe1:
+        ret.append((xe2 + 1, xe1))
     return ret
 
 
@@ -108,21 +106,6 @@ def diff(c1, c2):
                 return (dx[0], dx[1], dy[0], dy[1], dz[0], dz[1])
 
 
-# #
-# for idx1, c1 in enumerate(cubes):
-#     for idx2, c2 in enumerate(cubes):
-#         if idx1 < idx2:
-#             # print(f"{idx1}/{idx2}")
-#             co = intersect(c1, c2)
-#             di = diff(c1, c2)
-#             if co == None:
-#                 continue
-#             if co != None:
-#                 print(f"{idx1}({ons[idx1]}) and {idx2}({ons[idx2]}): {co}")
-#             if di == None:
-#                 print("all")
-#             else:
-#                 print(f"difflen:{di}")
 def CubeSize(cubes):
     total = 0
     for c in cubes:
@@ -131,37 +114,44 @@ def CubeSize(cubes):
     return total
 
 
-acubes = set()
-for idx, c in enumerate(cubes):
-    print(f"process cube {idx} size {CubeSize([c])}")
-    touchedcubes = set()
-    cubesonlef = set()
-    for existingc in acubes:
-        diffcubes = diff(existingc, c)
-        if diffcubes != None:
-            touchedcubes.add(existingc)
-            cubesonlef.add(diffcubes)
+def runPart2():
+    acubes = set()
+    for idx, c in enumerate(cubes):
+        print(f"process cube {idx} size {CubeSize([c])}")
+        touchedcubes = set()
+        cubesonlef = set()
+        for existingc in acubes:
+            diffcubes = diff(existingc, c)
+            if diffcubes != None:
+                touchedcubes.add(existingc)
+                cubesonlef.add(diffcubes)
 
-    if ons[idx]:
-        if len(touchedcubes) == 0:
-            acubes.add(c)
-        else:
-            acubes.add(c)
+        if ons[idx]:
             for ct in touchedcubes:
                 acubes = acubes.difference(ct)
             for cl in cubesonlef:
                 acubes.add(cl)
-        print(f"add {len(cubesonlef)} remove {len(touchedcubes)}")
-    else:
-        acubes = acubes.difference(touchedcubes)
-        acubes = acubes | cubesonlef
-        for ct in touchedcubes:
-            acubes = acubes.difference(ct)
-        for cl in cubesonlef:
-            acubes.add(cl)
-        print(f"radd {len(cubesonlef)} remove {len(touchedcubes)}")
+            print(f"on:add {len(cubesonlef)} remove {len(touchedcubes)}")
+            acubes.add(c)
+        else:
+            acubes = acubes.difference(touchedcubes)
+            acubes = acubes | cubesonlef
+            # for ct in touchedcubes:
+            #     acubes = acubes.difference(ct)
+            # for cl in cubesonlef:
+            #     acubes.add(cl)
+            print(f"off:add {len(cubesonlef)} remove {len(touchedcubes)}")
+        yield acubes
 
-total = CubeSize(cubes)
-print(total)
+
+for cubes1 in part1Run():
+    print(len(cubes1))
+
+for cubes2 in runPart2():
+    print(CubeSize(cubes2))
+
+# print(total)
 # 18504237586281391 - mine
-# 2758514936282235 - real (sample2)
+# 2758514936282235 - real (sample3)
+# 817294 - mine
+# 474140 - real (sample3)
