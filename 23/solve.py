@@ -5,7 +5,8 @@ from itertools import permutations, repeat
 
 # input = ['BACDBCDA']
 hallway = [x for x in repeat(' ', 7)]
-input = [['A', 'B'], ['D', 'C'], ['C', 'B'], ['A', 'D']]
+# input = [['A', 'B'], ['D', 'C'], ['C', 'B'], ['A', 'D']]#sample
+input = [['B', 'C'], ['A', 'D'], ['B', 'D'], ['C', 'A']]  # input
 rooms = []
 for inputr in input:
     room = deque()
@@ -17,7 +18,7 @@ for inputr in input:
 def hallwaypos2room(hallway, roomidx, roomamp):  # which hallway can move to roomidx
     leftidx = roomidx + 1
     idx = leftidx
-    steps = 1
+    steps = 2
     while idx >= 0:
         if hallway[idx] != ' ':
             if hallway[idx] != roomamp:
@@ -26,9 +27,12 @@ def hallwaypos2room(hallway, roomidx, roomamp):  # which hallway can move to roo
                 yield idx, steps
                 break
         idx -= 1
-        steps += 1
-    idx = leftidx
-    steps = 1
+        if (idx == 0):
+            steps + 1
+        else:
+            steps += 2
+    idx = leftidx + 1
+    steps = 2
     while idx < len(hallway):
         if hallway[idx] != ' ':
             if hallway[idx] != roomamp:
@@ -37,13 +41,16 @@ def hallwaypos2room(hallway, roomidx, roomamp):  # which hallway can move to roo
                 yield idx, steps
                 break
         idx += 1
-        steps += 1
+        if idx == len(hallway) - 1:
+            steps += 1
+        else:
+            steps += 2
 
 
 def hallwaypos(hallway, roomidx):  # from room, where can I move
     leftidx = roomidx + 1
     idx = leftidx
-    steps = 1
+    steps = 2
     while idx >= 0:
         if hallway[idx] != ' ':
             # print(f"{idx} has {hallway[idx]}")
@@ -51,9 +58,12 @@ def hallwaypos(hallway, roomidx):  # from room, where can I move
         # print(idx)
         yield idx, steps
         idx -= 1
-        steps += 1
-    idx = leftidx
-    steps = 1
+        if (idx == 0):
+            steps + 1
+        else:
+            steps += 2
+    idx = leftidx + 1
+    steps = 2
     while idx < len(hallway):
         if hallway[idx] != ' ':
             # print(f"{idx} has {hallway[idx]}")
@@ -61,33 +71,39 @@ def hallwaypos(hallway, roomidx):  # from room, where can I move
         # print(idx)
         yield idx, steps
         idx += 1
-        steps += 1
+        if idx == len(hallway) - 1:
+            steps += 1
+        else:
+            steps += 2
 
 
 mult = {'A': 1, 'B': 10, 'C': 100, 'D': 1000}
 
-costMin = 12521 + 1
+costMin = 999999  # 12521 + 1
 
 ownr = ['A', 'B', 'C', 'D']
 
 
 def move(hallway, level, cost):
-    print(hallway, cost, rooms)
-    print(f"{level}:{cost}")
-
     global costMin
-    if cost > costMin:
+    # print(hallway, cost, rooms)
+    # print(f"{level}:{cost}/{costMin}")
+
+    if cost >= costMin:
         return
 
     done = True
     for (idxR, room) in enumerate(rooms):
+        if len(room) < 2:
+            done = False
+            break
         for r in room:
-            if len(r) < 2:
-                done = False
             if r != ownr[idxR]:
                 done = False
+                break
     if done:
         costMin = min(cost, costMin)
+        print("done", costMin, level, hallway, rooms)
         return
 
     for (idxR, room) in enumerate(rooms):
@@ -106,7 +122,7 @@ def move(hallway, level, cost):
                     hc = hallway.copy()
                     assert (steps > 0)
                     # crosses one extra room (to the bottom)
-                    if len(room) > 0:
+                    if len(room) == 0:
                         steps += 1
                     costc = cost + steps * mult[amp]
 
@@ -117,21 +133,27 @@ def move(hallway, level, cost):
                 room.append(amp)
 
         if len(room) < 2:
-            amp = ownr[idxR]
-            # for this room try populate
-            for (idxH, steps) in hallwaypos2room(hallway, idxR, amp):
-                hc = hallway.copy()
-                # crosses one extra room
-                if len(room) == 0:
-                    steps += 1
-                costc = cost + steps * mult[amp]
-                print(f"{idxR} {hallway} extract {amp} from {idxH}")
-                hc[idxH] = ' '
-                room.append(amp)
+            hasOnlyOwning = True
+            for r in room:
+                if r != ownr[idxR]:
+                    hasOnlyOwning = False
+            if hasOnlyOwning:
+                amp = ownr[idxR]
+                # for this room try populate
+                for (idxH, steps) in hallwaypos2room(hallway, idxR, amp):
+                    hc = hallway.copy()
+                    # print(f"{idxR} {hallway} extract {amp} from {idxH}")
+                    hc[idxH] = ' '
+                    room.append(amp)
+                    # crosses one extra room
+                    if len(room) == 1:
+                        steps += 1
+                    costc = cost + steps * mult[amp]
 
-                move(hc, level + 1, costc)
-                amp2 = room.pop()
-                assert (amp2 == amp)
+                    move(hc, level + 1, costc)
+                    amp2 = room.pop()
+                    assert (amp2 == amp)
 
 
 move(hallway, 1, 0)
+print("done!", costMin)
