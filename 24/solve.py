@@ -1,4 +1,5 @@
 from functools import cache
+from itertools import product
 
 
 @cache
@@ -320,32 +321,30 @@ def Calc13(w, x, y, z):
     return (x, y, z)
 
 
-from itertools import product
-
-# for w in product([1,2,3,4,5,6,7,8,9],14):
-# max0
-for w in product(reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]), repeat=14):
-    # w = list(map(int, '13579246899999'))
-
-    r = (0, 0, 0)
-    r = Calc0(w[0], *r)
-    r = Calc1(w[1], *r)
-    r = Calc2(w[2], *r)
-    r = Calc3(w[3], *r)
-    r = Calc4(w[4], *r)
-    r = Calc5(w[5], *r)
-    r = Calc6(w[6], *r)
-    r = Calc7(w[7], *r)
-    r = Calc8(w[8], *r)
-    r = Calc9(w[9], *r)
-    r = Calc10(w[10], *r)
-    r = Calc11(w[11], *r)
-    r = Calc12(w[12], *r)
-    r = Calc13(w[13], *r)
-    (x, y, z) = r
-    print(f"{w} {z}")
-    # if z == 0:
-    break
+# # for w in product([1,2,3,4,5,6,7,8,9],14):
+# # max0
+# for w in product(reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]), repeat=14):
+#     # w = list(map(int, '13579246899999'))
+#
+#     r = (0, 0, 0)
+#     r = Calc0(w[0], *r)
+#     r = Calc1(w[1], *r)
+#     r = Calc2(w[2], *r)
+#     r = Calc3(w[3], *r)
+#     r = Calc4(w[4], *r)
+#     r = Calc5(w[5], *r)
+#     r = Calc6(w[6], *r)
+#     r = Calc7(w[7], *r)
+#     r = Calc8(w[8], *r)
+#     r = Calc9(w[9], *r)
+#     r = Calc10(w[10], *r)
+#     r = Calc11(w[11], *r)
+#     r = Calc12(w[12], *r)
+#     r = Calc13(w[13], *r)
+#     (x, y, z) = r
+#     print(f"{w} {z}")
+#     # if z == 0:
+#     break
 
 lambdas = []
 lambdas.append(lambda w, x, y, z: Calc0(w, x, y, z))
@@ -363,37 +362,56 @@ lambdas.append(lambda w, x, y, z: Calc11(w, x, y, z))
 lambdas.append(lambda w, x, y, z: Calc12(w, x, y, z))
 lambdas.append(lambda w, x, y, z: Calc13(w, x, y, z))
 
+calls = 0
+
+
+# @cache
+def stepw(w, k, x, y, z):
+    global calls
+    calls += 1
+    (xn, yn, zn) = lambdas[k](w, x, y, z)
+    if k == 13:
+        # print(zn)
+        if zn == 0:
+            print("found")
+            return w
+        else:
+            return None
+        # continue
+    stepret = step(k + 1, xn, yn, zn)
+    if stepret != None:
+        newret = f"{w}{stepret}"
+        print(f"{newret}")
+        return newret
+    return None
+
 
 @cache
 def step(k, x, y, z):
     # print(f"step {k} {x} {y} {z}")
-    for w in reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]):  # tricky!
-        (xn, yn, zn) = lambdas[k](w, x, y, z)
-        if k == 13:
-            # print(zn)
-            if zn == 0:
-                print("found")
-                return w
+    for w in [1, 2, 3, 4, 5, 6, 7, 8, 9]:  # tricky!
+        if k == 0 and w <= 8:
             continue
-        stepret = step(k + 1, xn, yn, zn)
-        if stepret != None:
-            newret = f"{w}{stepret}"
-            # print(f"newret:{newret}")
-            return newret
+        # for w in reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]):  # tricky!
+        ret = stepw(w, k, x, y, z)
+        if ret is not None:
+            return ret
+        # (xn, yn, zn) = lambdas[k](w, x, y, z)
+        # if k == 13:
+        #     # print(zn)
+        #     if zn == 0:
+        #         print("found")
+        #         return w
+        #     continue
+        # stepret = step(k + 1, xn, yn, zn)
+        # if stepret != None:
+        #     newret = f"{w}{stepret}"
+        #     print(f"{newret}")
+        #     return newret
     return None
 
 
 res = step(0, 0, 0, 0)
-print("done")
-# def run(idx):
-#     for w0 in product([1, 2, 3, 4, 5, 6, 7, 8, 9], repeat=1):
-#         r = (0, 0, 0)
-#         res = lambdas[idx](w0[0], *r)
-#         # print(f"{w0} {res}")
-#         yield w0, res
-#
-#
-# for l in range(14):
-#     for r in run(0):
-#         print(r)
+print(f"done {res} {calls}")
 # 97919997299495
+# 2nd: random - start with 5 51619131181131 #why?
