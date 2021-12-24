@@ -321,10 +321,9 @@ def Calc13(w, x, y, z):
     return (x, y, z)
 
 
-# # for w in product([1,2,3,4,5,6,7,8,9],14):
-# # max0
+#
+# # Brute force - doesnt work, of course..
 # for w in product(reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]), repeat=14):
-#     # w = list(map(int, '13579246899999'))
 #
 #     r = (0, 0, 0)
 #     r = Calc0(w[0], *r)
@@ -343,75 +342,40 @@ def Calc13(w, x, y, z):
 #     r = Calc13(w[13], *r)
 #     (x, y, z) = r
 #     print(f"{w} {z}")
-#     # if z == 0:
-#     break
+#     if z == 0:
+#         print(f"DONE {f}")
+#         break
 
-lambdas = []
-lambdas.append(lambda w, x, y, z: Calc0(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc1(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc2(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc3(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc4(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc5(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc6(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc7(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc8(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc9(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc10(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc11(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc12(w, x, y, z))
-lambdas.append(lambda w, x, y, z: Calc13(w, x, y, z))
-
-calls = 0
-
-
-# @cache
-def stepw(w, k, x, y, z):
-    global calls
-    calls += 1
-    (xn, yn, zn) = lambdas[k](w, x, y, z)
-    if k == 13:
-        # print(zn)
-        if zn == 0:
-            print("found")
-            return w
-        else:
-            return None
-        # continue
-    stepret = step(k + 1, xn, yn, zn)
-    if stepret != None:
-        newret = f"{w}{stepret}"
-        print(f"{newret}")
-        return newret
-    return None
+lambdas = [lambda w, x, y, z: Calc0(w, x, y, z), lambda w, x, y, z: Calc1(w, x, y, z),
+           lambda w, x, y, z: Calc2(w, x, y, z), lambda w, x, y, z: Calc3(w, x, y, z),
+           lambda w, x, y, z: Calc4(w, x, y, z), lambda w, x, y, z: Calc5(w, x, y, z),
+           lambda w, x, y, z: Calc6(w, x, y, z), lambda w, x, y, z: Calc7(w, x, y, z),
+           lambda w, x, y, z: Calc8(w, x, y, z), lambda w, x, y, z: Calc9(w, x, y, z),
+           lambda w, x, y, z: Calc10(w, x, y, z), lambda w, x, y, z: Calc11(w, x, y, z),
+           lambda w, x, y, z: Calc12(w, x, y, z), lambda w, x, y, z: Calc13(w, x, y, z)]
 
 
 @cache
 def step(k, x, y, z):
-    # print(f"step {k} {x} {y} {z}")
-    for w in [1, 2, 3, 4, 5, 6, 7, 8, 9]:  # tricky!
-        if k == 0 and w <= 8:
+    # for w in reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]):
+    for w in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
+        if k == 0 and w <= 4:  # try skipping some numbers for 1st position (for 2nd part)
             continue
-        # for w in reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]):  # tricky!
-        ret = stepw(w, k, x, y, z)
-        if ret is not None:
-            return ret
-        # (xn, yn, zn) = lambdas[k](w, x, y, z)
-        # if k == 13:
-        #     # print(zn)
-        #     if zn == 0:
-        #         print("found")
-        #         return w
-        #     continue
-        # stepret = step(k + 1, xn, yn, zn)
-        # if stepret != None:
-        #     newret = f"{w}{stepret}"
-        #     print(f"{newret}")
-        #     return newret
+        (xn, yn, zn) = lambdas[k](w, x, y, z)
+        if k == 13:
+            if zn == 0:
+                print("found")
+                return w
+            continue
+        stepk1Ret = step(k + 1, xn, yn, zn)
+        if stepk1Ret != None:
+            stepkRet = f"{w}{stepk1Ret}"
+            print(f"{stepkRet}")
+            return stepkRet
     return None
 
 
 res = step(0, 0, 0, 0)
-print(f"done {res} {calls}")
+print(f"done {res}")
 # 97919997299495
-# 2nd: random - start with 5 51619131181131 #why?
+# 51619131181131 # start with 5 otherwise it takes too long
