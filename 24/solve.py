@@ -356,10 +356,9 @@ lambdas = [lambda w, x, y, z: Calc0(w, x, y, z), lambda w, x, y, z: Calc1(w, x, 
 
 
 @cache
-def step(k, x, y, z):
-    # for w in reversed([1, 2, 3, 4, 5, 6, 7, 8, 9]):
-    for w in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
-        if k == 0 and w <= 4:  # try skipping some numbers for 1st position (for 2nd part)
+def step(k, x, y, z, reversed):
+    for w in sorted([1, 2, 3, 4, 5, 6, 7, 8, 9], reverse=reversed):
+        if not reversed and k == 0 and w <= 4:  # try skipping some numbers for 1st position (for 2nd part)
             continue
         (xn, yn, zn) = lambdas[k](w, x, y, z)
         if k == 13:
@@ -367,7 +366,7 @@ def step(k, x, y, z):
                 print("found")
                 return w
             continue
-        stepk1Ret = step(k + 1, xn, yn, zn)
+        stepk1Ret = step(k + 1, xn, yn, zn, reversed)
         if stepk1Ret != None:
             stepkRet = f"{w}{stepk1Ret}"
             print(f"{stepkRet}")
@@ -375,7 +374,9 @@ def step(k, x, y, z):
     return None
 
 
-res = step(0, 0, 0, 0)
-print(f"done {res}")
+cost = step(0, 0, 0, 0, True)
+print(f"done {cost}")
 # 97919997299495
-# 51619131181131 # start with 5 otherwise it takes too long
+cost = step(0, 0, 0, 0, False)
+print(f"done {cost}")
+# 51619131181131 # skip 0,1,2,3,4 otherwise it takes too long
